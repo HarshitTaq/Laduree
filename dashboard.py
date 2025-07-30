@@ -6,7 +6,8 @@ import numpy as np
 from scipy.stats import norm
 
 # --- Branding Header ---
-st.image("your_combined_logo_filename.png", use_column_width=True)
+st.image("your_combined_logo_filename.png", use_container_width=True)
+
 st.markdown(
     """<h2 style='text-align: center; color: #6A5ACD;'>French Spirit - Laduree Dashboard</h2>
     <p style='text-align: center; color: gray;'>Powered by Taqtics</p>""",
