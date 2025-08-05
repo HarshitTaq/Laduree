@@ -28,7 +28,7 @@ def find_column(columns, target_names):
             return columns[col_lower.index(t.lower())]
     return None
 
-# Consistent color mapping
+# Consistent Audit Status color coding
 status_colors = {
     "Outstanding": "#006400",            # Dark Green
     "Meets Expectations": "#32CD32",     # Brighter Green
@@ -80,15 +80,10 @@ if uploaded_file is not None:
 
     # ---- SIDEBAR FILTERS ----
     st.sidebar.header("Filters")
-    # Month filter
     month_options = ["All"] + unique_months
     month_selected = st.sidebar.selectbox("Select Month", month_options)
-    if month_selected != "All":
-        data_df = df[df["__month_label__"] == month_selected].copy()
-    else:
-        data_df = df.copy()
+    data_df = df if month_selected == "All" else df[df["__month_label__"] == month_selected]
 
-    # Country filters
     unique_countries = sorted(data_df[col_country].dropna().unique())
     country_options = ["All"] + unique_countries
     country_selected_perf = st.sidebar.selectbox("Country for 'Store Performance by Country'", country_options, key="perf_country")
@@ -100,7 +95,6 @@ if uploaded_file is not None:
     country_selected_kpi = st.sidebar.selectbox("Country for 'Store and Individual KPI Analysis'", country_options, key="kpi_country")
     kpi_df = data_df if country_selected_kpi == "All" else data_df[data_df[col_country] == country_selected_kpi]
 
-    # Store filter
     stores_selected = st.sidebar.multiselect("Select Store", options=data_df[col_store].unique(), default=data_df[col_store].unique())
     data_df = data_df[data_df[col_store].isin(stores_selected)]
     perf_df = perf_df[perf_df[col_store].isin(stores_selected)]
@@ -112,92 +106,7 @@ if uploaded_file is not None:
         df_sub.sort_values([col_country, col_store, col_employee_name, col_submitted_for], inplace=True)
         df_sub.drop_duplicates(subset=[col_country, col_store, col_employee_name, "__month_label__"], keep='first', inplace=True)
 
-    # --- Store-wise Count by Audit Status ---
-    st.subheader("📊 Store-wise Count by Audit Status")
-    fig_store_audit_status = px.bar(
-        data_df.groupby([col_store, col_audit_status]).size().reset_index(name='Count'),
-        x=col_store,
-        y='Count',
-        color=col_audit_status,
-        barmode='stack',
-        title='Store-wise Count by Audit Status',
-        labels={'Count': 'Number of Employees'},
-        color_discrete_map=status_colors
-    )
-    fig_store_audit_status.update_layout(xaxis_tickangle=-45)
-    fig_store_audit_status.update_traces(marker_line_color='black', marker_line_width=0.5)
-    st.plotly_chart(fig_store_audit_status)
-
-    # --- Store Performance by Country ---
-    st.subheader("🏆 Store Performance by Country")
-    country_store_avg = perf_df.groupby(col_store)[col_result].mean().reset_index()
-    country_store_avg = country_store_avg.sort_values(by=col_result, ascending=False)
-    fig_country_perf = px.bar(
-        country_store_avg,
-        x=col_store,
-        y=col_result,
-        text=col_result,
-        title=f"Store Performance in {country_selected_perf}",
-        labels={col_result: "Average Score"}
-    )
-    fig_country_perf.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-    fig_country_perf.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]))
-    st.plotly_chart(fig_country_perf)
-
-    # --- Country-wise Bell Curve ---
-    st.subheader("Country-wise Bell Curve")
-    fig_country = px.histogram(
-        drill_df,
-        x=col_result,
-        nbins=20,
-        color=col_audit_status,
-        hover_data=[col_entity_id, col_employee_name],
-        labels={col_result: "Performance Score"},
-        title=f"Performance Bell Curve for {country_selected_drill}",
-        color_discrete_map=status_colors
-    )
-    fig_country.update_traces(marker_line_color='black', marker_line_width=0.5)
-    st.plotly_chart(fig_country)
-
-    # --- Store-wise Bell Curve ---
-    st.subheader("Store-wise Bell Curve")
-    store_options = ["All"] + list(data_df[col_store].dropna().unique())
-    selected_store = st.selectbox("Select Store", store_options, key="drilldown_store")
-    store_df = data_df if selected_store == "All" else data_df[data_df[col_store] == selected_store]
-    store_label = "All Stores" if selected_store == "All" else selected_store
-
-    fig_store = px.histogram(
-        store_df,
-        x=col_result,
-        nbins=20,
-        color=col_audit_status,
-        hover_data=[col_country, col_entity_id, col_employee_name],
-        labels={col_result: "Performance Score"},
-        title=f"Performance Bell Curve for {store_label}",
-        color_discrete_map=status_colors
-    )
-    fig_store.update_traces(marker_line_color='black', marker_line_width=0.5)
-    st.plotly_chart(fig_store)
-
-    # --- Probability Distribution Chart ---
-    st.subheader("Probability Density of Performance Scores")
-    mean_score = data_df[col_result].mean()
-    std_dev = data_df[col_result].std()
-    x = np.linspace(data_df[col_result].min(), data_df[col_result].max(), 500)
-    pdf_y = norm.pdf(x, mean_score, std_dev)
-    fig_pdf = go.Figure()
-    fig_pdf.add_trace(go.Scatter(x=x, y=pdf_y, mode='lines', name='PDF'))
-    fig_pdf.add_vline(x=mean_score, line_dash='dash', line_color='green',
-                      annotation_text='Mean', annotation_position='top left')
-    fig_pdf.update_layout(
-        title='Probability Density Function (PDF) of Performance Scores',
-        xaxis_title='Performance Score',
-        yaxis_title='Probability Density'
-    )
-    st.plotly_chart(fig_pdf)
-    st.markdown(f"**Mean Score:** {mean_score:.2f}  \n**Standard Deviation:** {std_dev:.2f}")
-
-    # --- Score Distribution by Country ---
+    # --- Score Distribution by Country and Audit Status ---
     st.subheader("Score Distribution by Country and Audit Status")
     fig_country_status = px.strip(
         data_df,
@@ -214,83 +123,73 @@ if uploaded_file is not None:
     st.plotly_chart(fig_country_status)
 
     # --- Consolidated Bell Curve with Performance Bands ---
-st.subheader("📈 Consolidated Bell Curve with Performance Bands")
+    st.subheader("📈 Consolidated Bell Curve with Performance Bands")
 
-# Choose dataset for consolidated, country-wise, or store-wise view
-bell_scope = st.radio("Select Bell Curve Scope", ["Consolidated", "By Country", "By Store"], horizontal=True)
+    bell_scope = st.radio("Select Bell Curve Scope", ["Consolidated", "By Country", "By Store"], horizontal=True)
 
-if bell_scope == "Consolidated":
-    bell_df = data_df.copy()
-    bell_title = "All Countries & Stores"
-elif bell_scope == "By Country":
-    bell_country = st.selectbox("Select Country", ["All"] + list(data_df[col_country].unique()))
-    if bell_country == "All":
+    if bell_scope == "Consolidated":
         bell_df = data_df.copy()
-        bell_title = "All Countries"
-    else:
-        bell_df = data_df[data_df[col_country] == bell_country]
-        bell_title = f"{bell_country}"
-else:  # By Store
-    bell_store = st.selectbox("Select Store", ["All"] + list(data_df[col_store].unique()))
-    if bell_store == "All":
-        bell_df = data_df.copy()
-        bell_title = "All Stores"
-    else:
-        bell_df = data_df[data_df[col_store] == bell_store]
-        bell_title = f"{bell_store}"
+        bell_title = "All Countries & Stores"
+    elif bell_scope == "By Country":
+        bell_country = st.selectbox("Select Country", ["All"] + list(data_df[col_country].unique()))
+        if bell_country == "All":
+            bell_df = data_df.copy()
+            bell_title = "All Countries"
+        else:
+            bell_df = data_df[data_df[col_country] == bell_country]
+            bell_title = f"{bell_country}"
+    else:  # By Store
+        bell_store = st.selectbox("Select Store", ["All"] + list(data_df[col_store].unique()))
+        if bell_store == "All":
+            bell_df = data_df.copy()
+            bell_title = "All Stores"
+        else:
+            bell_df = data_df[data_df[col_store] == bell_store]
+            bell_title = f"{bell_store}"
 
-if not bell_df.empty:
-    mean_score = bell_df[col_result].mean()
-    std_dev = bell_df[col_result].std()
-    x = np.linspace(0, 100, 500)
-    pdf_y = norm.pdf(x, mean_score, std_dev)
+    if not bell_df.empty:
+        mean_score = bell_df[col_result].mean()
+        std_dev = bell_df[col_result].std()
+        x = np.linspace(0, 100, 500)
+        pdf_y = norm.pdf(x, mean_score, std_dev)
 
-    import plotly.graph_objects as go
-    fig_bell = go.Figure()
+        fig_bell = go.Figure()
 
-    # Add histogram of scores
-    fig_bell.add_trace(go.Histogram(
-        x=bell_df[col_result],
-        nbinsx=20,
-        name="Scores",
-        marker_color="lightgrey",
-        marker_line_color="black",
-        marker_line_width=0.5,
-        opacity=0.6,
-        histnorm='probability'
-    ))
+        fig_bell.add_trace(go.Histogram(
+            x=bell_df[col_result],
+            nbinsx=20,
+            name="Scores",
+            marker_color="lightgrey",
+            marker_line_color="black",
+            marker_line_width=0.5,
+            opacity=0.6,
+            histnorm='probability'
+        ))
 
-    # Add PDF curve
-    fig_bell.add_trace(go.Scatter(
-        x=x, y=pdf_y,
-        mode='lines',
-        name="Bell Curve",
-        line=dict(color="blue", width=2)
-    ))
+        fig_bell.add_trace(go.Scatter(
+            x=x, y=pdf_y,
+            mode='lines',
+            name="Bell Curve",
+            line=dict(color="blue", width=2)
+        ))
 
-    # Add shaded bands for audit status
-    fig_bell.add_vrect(x0=0, x1=60, fillcolor="#FF0000", opacity=0.2, line_width=0, annotation_text="Below Expectations", annotation_position="top left")
-    fig_bell.add_vrect(x0=60.1, x1=75.5, fillcolor="#FFC0CB", opacity=0.2, line_width=0, annotation_text="Needs Improvement", annotation_position="top left")
-    fig_bell.add_vrect(x0=75.6, x1=95, fillcolor="#32CD32", opacity=0.2, line_width=0, annotation_text="Meets Expectations", annotation_position="top left")
-    fig_bell.add_vrect(x0=95.1, x1=100, fillcolor="#006400", opacity=0.2, line_width=0, annotation_text="Outstanding", annotation_position="top left")
+        fig_bell.add_vrect(x0=0, x1=60, fillcolor="#FF0000", opacity=0.2, line_width=0, annotation_text="Below Expectations", annotation_position="top left")
+        fig_bell.add_vrect(x0=60.1, x1=75.5, fillcolor="#FFC0CB", opacity=0.2, line_width=0, annotation_text="Needs Improvement", annotation_position="top left")
+        fig_bell.add_vrect(x0=75.6, x1=95, fillcolor="#32CD32", opacity=0.2, line_width=0, annotation_text="Meets Expectations", annotation_position="top left")
+        fig_bell.add_vrect(x0=95.1, x1=100, fillcolor="#006400", opacity=0.2, line_width=0, annotation_text="Outstanding", annotation_position="top left")
 
-    # Add Topline categories
-    fig_bell.add_annotation(x=20, y=max(pdf_y)/1.5, text="Non-Performers", showarrow=False, font=dict(size=12, color="black"))
-    fig_bell.add_annotation(x=60, y=max(pdf_y), text="Developing Performers", showarrow=False, font=dict(size=12, color="black"))
-    fig_bell.add_annotation(x=90, y=max(pdf_y)/1.5, text="Top Performers", showarrow=False, font=dict(size=12, color="black"))
+        fig_bell.add_annotation(x=20, y=max(pdf_y)/1.5, text="Non-Performers", showarrow=False, font=dict(size=12, color="black"))
+        fig_bell.add_annotation(x=60, y=max(pdf_y), text="Developing Performers", showarrow=False, font=dict(size=12, color="black"))
+        fig_bell.add_annotation(x=90, y=max(pdf_y)/1.5, text="Top Performers", showarrow=False, font=dict(size=12, color="black"))
 
-    # Layout
-    fig_bell.update_layout(
-        title=f"Performance Bell Curve for {bell_title}",
-        xaxis_title="Performance Score",
-        yaxis_title="Probability",
-        bargap=0.05
-    )
+        fig_bell.update_layout(
+            title=f"Performance Bell Curve for {bell_title}",
+            xaxis_title="Performance Score",
+            yaxis_title="Probability",
+            bargap=0.05
+        )
 
-    st.plotly_chart(fig_bell)
-else:
-    st.warning("No data available for the selected scope.")
-
+        st.plotly_chart(fig_bell)
 
     # --- Store KPI/Individual KPI Chart ---
     st.subheader("📈 Store and Individual KPI Analysis")
@@ -333,5 +232,7 @@ else:
         )
         fig_indkpi.update_layout(xaxis_tickangle=-45)
         st.plotly_chart(fig_indkpi)
+
 else:
     st.info("Please upload a CSV or Excel file to begin.")
+
