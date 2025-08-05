@@ -261,6 +261,33 @@ if uploaded_file is not None:
         )
         st.plotly_chart(fig_bell)
 
+        # --- Employee Grid for Bell Curve Categories ---
+    st.subheader("Employees by Performance Category")
+
+    category_options = ["All", "Below Expectations", "Needs Improvement", "Meets Expectations", "Outstanding"]
+    selected_category = st.selectbox("Select Performance Category", category_options, index=0)
+
+    bell_df["Performance Category"] = pd.cut(
+        bell_df[col_result],
+        bins=[0, 60, 75.5, 95, 100],
+        labels=["Below Expectations", "Needs Improvement", "Meets Expectations", "Outstanding"],
+        include_lowest=True
+    )
+
+    if selected_category != "All":
+        category_df = bell_df[bell_df["Performance Category"] == selected_category]
+    else:
+        category_df = bell_df.copy()
+
+    if category_df.empty:
+        st.warning(f"No employees found in {selected_category} category.")
+    else:
+        st.dataframe(
+            category_df[[col_employee_name, col_store, col_country, col_audit_status, col_result, "Performance Category"]]
+            .sort_values(by=col_result, ascending=False)
+        )
+
+
     # --- Store KPI/Individual KPI Chart ---
     st.subheader("📈 Store and Individual KPI Analysis")
     kpi_options = ["All", "Store KPI", "Individual KPI"]
