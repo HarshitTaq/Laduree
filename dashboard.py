@@ -28,6 +28,26 @@ def find_column(columns, target_names):
             return columns[col_lower.index(t.lower())]
     return None
 
+# ---- Define consistent Audit Status Mapping ----
+def categorize_status(score):
+    if score <= 60:
+        return "Below Expectations"
+    elif 60.1 <= score <= 75.5:
+        return "Needs Improvement"
+    elif 75.6 <= score <= 95:
+        return "Meets Expectations"
+    elif score > 95:
+        return "Outstanding"
+    else:
+        return "Unknown"
+
+status_colors = {
+    "Outstanding": "darkgreen",
+    "Meets Expectations": "lightgreen",
+    "Needs Improvement": "pink",
+    "Below Expectations": "red"
+}
+
 uploaded_file = st.file_uploader("Upload your Performance CSV or Excel file (all months)", type=["csv", "xlsx", "xls"])
 
 if uploaded_file is not None:
@@ -65,6 +85,9 @@ if uploaded_file is not None:
     df[col_submitted_for] = pd.to_datetime(df[col_submitted_for], errors='coerce')
     df = df.dropna(subset=[col_submitted_for])
 
+    # Add Audit Status if not consistent
+    df["Audit Category"] = df[col_result].apply(categorize_status)
+
     # Add Month-Year column for filtering
     df["__month_label__"] = df[col_submitted_for].dt.strftime('%B %Y')
     unique_months = sorted(df["__month_label__"].dropna().unique(), 
@@ -84,23 +107,14 @@ if uploaded_file is not None:
     unique_countries = sorted(data_df[col_country].dropna().unique())
     country_options = ["All"] + unique_countries
     country_selected_perf = st.sidebar.selectbox("Country for 'Store Performance by Country'", country_options, key="perf_country")
-    if country_selected_perf == "All":
-        perf_df = data_df.copy()
-    else:
-        perf_df = data_df[data_df[col_country] == country_selected_perf]
+    perf_df = data_df if country_selected_perf == "All" else data_df[data_df[col_country] == country_selected_perf]
 
     country_selected_drill = st.sidebar.selectbox("Country for 'Country-wise Bell Curve'", country_options, key="drill_country")
-    if country_selected_drill == "All":
-        drill_df = data_df.copy()
-    else:
-        drill_df = data_df[data_df[col_country] == country_selected_drill]
+    drill_df = data_df if country_selected_drill == "All" else data_df[data_df[col_country] == country_selected_drill]
 
-    # NEW KPI Country Filter
+    # KPI Country Filter
     country_selected_kpi = st.sidebar.selectbox("Country for 'Store and Individual KPI Analysis'", country_options, key="kpi_country")
-    if country_selected_kpi == "All":
-        kpi_df = data_df.copy()
-    else:
-        kpi_df = data_df[data_df[col_country] == country_selected_kpi]
+    kpi_df = data_df if country_selected_kpi == "All" else data_df[data_df[col_country] == country_selected_kpi]
 
     # Store filter
     stores_selected = st.sidebar.multiselect("Select Store", options=data_df[col_store].unique(), default=data_df[col_store].unique())
@@ -109,31 +123,22 @@ if uploaded_file is not None:
     drill_df = drill_df[drill_df[col_store].isin(stores_selected)]
     kpi_df = kpi_df[kpi_df[col_store].isin(stores_selected)]
 
-    # Keep only earliest submission per employee-store-country-month
+    # Deduplicate
     for df_sub in [data_df, perf_df, drill_df, kpi_df]:
         df_sub.sort_values([col_country, col_store, col_employee_name, col_submitted_for], inplace=True)
         df_sub.drop_duplicates(subset=[col_country, col_store, col_employee_name, "__month_label__"], keep='first', inplace=True)
 
-    # Month/cumulative header
-    display_label = month_selected if month_selected != "All" else "All Months"
-    st.markdown(f"<h3 style='text-align: center; color: #20B2AA;'>Data for: {display_label}</h3>", unsafe_allow_html=True)
-
     # --- Store-wise Count by Audit Status ---
     st.subheader("📊 Store-wise Count by Audit Status")
-    selected_stores_bar = st.multiselect(
-        "Select Store(s) for Audit Status Count Chart",
-        options=sorted(data_df[col_store].dropna().unique()),
-        default=sorted(data_df[col_store].dropna().unique())
-    )
-    filtered_status_df = data_df[data_df[col_store].isin(selected_stores_bar)]
     fig_store_audit_status = px.bar(
-        filtered_status_df.groupby([col_store, col_audit_status]).size().reset_index(name='Count'),
+        data_df.groupby([col_store, "Audit Category"]).size().reset_index(name='Count'),
         x=col_store,
         y='Count',
-        color=col_audit_status,
+        color="Audit Category",
         barmode='stack',
         title='Store-wise Count by Audit Status',
-        labels={'Count': 'Number of Employees'}
+        labels={'Count': 'Number of Employees'},
+        color_discrete_map=status_colors
     )
     fig_store_audit_status.update_layout(xaxis_tickangle=-45)
     st.plotly_chart(fig_store_audit_status)
@@ -160,41 +165,31 @@ if uploaded_file is not None:
         drill_df,
         x=col_result,
         nbins=20,
-        color=col_audit_status,
-        hover_data=[col_entity_id, col_audit_status, col_employee_name],
+        color="Audit Category",
+        hover_data=[col_entity_id, col_employee_name],
         labels={col_result: "Performance Score"},
-        title=f"Performance Bell Curve for {country_selected_drill}"
+        title=f"Performance Bell Curve for {country_selected_drill}",
+        color_discrete_map=status_colors
     )
-    fig_country.update_layout(bargap=0.1)
     st.plotly_chart(fig_country)
-
-    st.markdown(f"### Employees in {country_selected_drill}")
-    st.dataframe(
-        drill_df[[col_employee_name, col_store, col_entity_id, col_audit_status, col_result]]
-        .sort_values(by=col_result, ascending=False)
-    )
 
     # --- Store-wise Bell Curve ---
     st.subheader("Store-wise Bell Curve")
     store_options = ["All"] + list(data_df[col_store].dropna().unique())
     selected_store = st.selectbox("Select Store", store_options, key="drilldown_store")
-    if selected_store == "All":
-        store_df = data_df.copy()
-        store_label = "All Stores"
-    else:
-        store_df = data_df[data_df[col_store] == selected_store]
-        store_label = selected_store
+    store_df = data_df if selected_store == "All" else data_df[data_df[col_store] == selected_store]
+    store_label = "All Stores" if selected_store == "All" else selected_store
 
     fig_store = px.histogram(
         store_df,
         x=col_result,
         nbins=20,
-        color=col_audit_status,
+        color="Audit Category",
         hover_data=[col_country, col_entity_id, col_employee_name],
         labels={col_result: "Performance Score"},
-        title=f"Performance Bell Curve for {store_label}"
+        title=f"Performance Bell Curve for {store_label}",
+        color_discrete_map=status_colors
     )
-    fig_store.update_layout(bargap=0.1)
     st.plotly_chart(fig_store)
 
     # --- Probability Distribution Chart ---
@@ -215,17 +210,18 @@ if uploaded_file is not None:
     st.plotly_chart(fig_pdf)
     st.markdown(f"**Mean Score:** {mean_score:.2f}  \n**Standard Deviation:** {std_dev:.2f}")
 
-    # --- Country vs Score by Audit Status ---
+    # --- Score Distribution by Country ---
     st.subheader("Score Distribution by Country and Audit Status")
     fig_country_status = px.strip(
         data_df,
         x=col_country,
         y=col_result,
-        color=col_audit_status,
+        color="Audit Category",
         hover_data=[col_employee_name, col_store, col_entity_id],
         stripmode="overlay",
         labels={col_result: "Performance Score"},
-        title="Performance Scores by Country Grouped by Audit Status"
+        title="Performance Scores by Country Grouped by Audit Status",
+        color_discrete_map=status_colors
     )
     fig_country_status.update_layout(yaxis=dict(range=[0, 100]))
     st.plotly_chart(fig_country_status)
@@ -273,3 +269,4 @@ if uploaded_file is not None:
         st.plotly_chart(fig_indkpi)
 else:
     st.info("Please upload a CSV or Excel file to begin.")
+
