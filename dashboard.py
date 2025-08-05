@@ -80,27 +80,26 @@ if uploaded_file is not None:
     else:
         data_df = df.copy()
 
-    # Store filter
-    stores_selected = st.sidebar.multiselect("Select Store", options=data_df[col_store].unique(), default=data_df[col_store].unique())
-    data_df = data_df[data_df[col_store].isin(stores_selected)]
+    # Country filter with "All"
+    unique_countries = sorted(data_df[col_country].dropna().unique())
+    country_options = ["All"] + unique_countries
 
-    # Keep only earliest submission per employee-store-country-month
-    data_df = data_df.sort_values([col_country, col_store, col_employee_name, col_submitted_for])
-    data_df = data_df.drop_duplicates(subset=[col_country, col_store, col_employee_name, "__month_label__"], keep='first')
+    # Store filter with "All"
+    unique_stores = sorted(data_df[col_store].dropna().unique())
+    store_options = ["All"] + unique_stores
 
-    # --- Store Performance by Country [WITH ALL OPTION!] ---
+    # Store Performance by Country (with "All" countries or just one)
     st.subheader("🏆 Store Performance by Country")
-    # Add "All" option on top
-    country_options = ["All"] + sorted(data_df[col_country].dropna().unique())
-    selected_country_perf = st.selectbox(
-        "Select Country to View Store Performance", country_options
-    )
+    selected_country_perf = st.selectbox("Select Country", country_options, key="perf_country")
+    selected_store_perf = st.selectbox("Select Store", store_options, key="perf_store")
     if selected_country_perf == "All":
         perf_df = data_df.copy()
-        country_label = "All Countries"
     else:
         perf_df = data_df[data_df[col_country] == selected_country_perf]
-        country_label = selected_country_perf
+    if selected_store_perf != "All":
+        perf_df = perf_df[perf_df[col_store] == selected_store_perf]
+    country_label = selected_country_perf if selected_country_perf != "All" else "All Countries"
+    store_label = selected_store_perf if selected_store_perf != "All" else "All Stores"
 
     country_store_avg = perf_df.groupby(col_store)[col_result].mean().reset_index()
     country_store_avg = country_store_avg.sort_values(by=col_result, ascending=False)
@@ -116,18 +115,18 @@ if uploaded_file is not None:
     fig_country_perf.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]))
     st.plotly_chart(fig_country_perf)
 
-    # --- Country-wise Bell Curve and Drilldown [WITH ALL OPTION!] ---
+    # Country-wise Bell Curve and Drilldown (with "All" countries or just one)
     st.subheader("Country-wise Bell Curve and Drilldown")
-    country_options_drill = ["All"] + sorted(data_df[col_country].dropna().unique())
-    selected_country_drill = st.selectbox(
-        "Select Country for Drilldown", country_options_drill, key="drilldown_country"
-    )
+    selected_country_drill = st.selectbox("Select Country", country_options, key="drilldown_country")
+    selected_store_drill = st.selectbox("Select Store", store_options, key="drilldown_store")
     if selected_country_drill == "All":
         drill_df = data_df.copy()
-        drill_country_label = "All Countries"
     else:
         drill_df = data_df[data_df[col_country] == selected_country_drill]
-        drill_country_label = selected_country_drill
+    if selected_store_drill != "All":
+        drill_df = drill_df[drill_df[col_store] == selected_store_drill]
+    drill_country_label = selected_country_drill if selected_country_drill != "All" else "All Countries"
+    drill_store_label = selected_store_drill if selected_store_drill != "All" else "All Stores"
 
     fig_country = px.histogram(
         drill_df,
@@ -136,12 +135,12 @@ if uploaded_file is not None:
         color=col_audit_status,
         hover_data=[col_entity_id, col_audit_status, col_employee_name],
         labels={col_result: "Performance Score"},
-        title=f"Performance Bell Curve for {drill_country_label}"
+        title=f"Performance Bell Curve for {drill_country_label} - {drill_store_label}"
     )
     fig_country.update_layout(bargap=0.1)
     st.plotly_chart(fig_country)
 
-    st.markdown(f"### Employees in {drill_country_label}")
+    st.markdown(f"### Employees in {drill_country_label} - {drill_store_label}")
     st.dataframe(
         drill_df[[col_employee_name, col_store, col_entity_id, col_audit_status, col_result]]
         .sort_values(by=col_result, ascending=False)
