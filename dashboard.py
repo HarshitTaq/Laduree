@@ -28,7 +28,7 @@ def find_column(columns, target_names):
             return columns[col_lower.index(t.lower())]
     return None
 
-# Consistent Audit Status color coding
+# Consistent color coding for Audit Status
 status_colors = {
     "Outstanding": "#006400",            # Dark Green
     "Meets Expectations": "#32CD32",     # Brighter Green
@@ -51,7 +51,7 @@ if uploaded_file is not None:
     col_entity_id = find_column(df.columns, ["Entity Id"])
     col_employee_name = find_column(df.columns, ["Employee Name"])
     col_result = find_column(df.columns, ["Result"])
-    col_submitted_for = find_column(df.columns, ["Submitted For", "Submitted_For", "Submission Date", "Submission_Date"])
+    col_submitted_for = find_column(df.columns, ["Submitted For", "Submission_Date", "Submission Date"])
     col_store_kpi = find_column(df.columns, ["Store KPI", "Store_KPI"])
     col_ind_kpi = find_column(df.columns, ["Individual KPI", "Individual_KPI", "Individual Kpi"])
 
@@ -106,7 +106,92 @@ if uploaded_file is not None:
         df_sub.sort_values([col_country, col_store, col_employee_name, col_submitted_for], inplace=True)
         df_sub.drop_duplicates(subset=[col_country, col_store, col_employee_name, "__month_label__"], keep='first', inplace=True)
 
-    # --- Score Distribution by Country and Audit Status ---
+    # --- Store-wise Count by Audit Status ---
+    st.subheader("📊 Store-wise Count by Audit Status")
+    fig_store_audit_status = px.bar(
+        data_df.groupby([col_store, col_audit_status]).size().reset_index(name='Count'),
+        x=col_store,
+        y='Count',
+        color=col_audit_status,
+        barmode='stack',
+        title='Store-wise Count by Audit Status',
+        labels={'Count': 'Number of Employees'},
+        color_discrete_map=status_colors
+    )
+    fig_store_audit_status.update_layout(xaxis_tickangle=-45)
+    fig_store_audit_status.update_traces(marker_line_color='black', marker_line_width=0.5)
+    st.plotly_chart(fig_store_audit_status)
+
+    # --- Store Performance by Country ---
+    st.subheader("🏆 Store Performance by Country")
+    country_store_avg = perf_df.groupby(col_store)[col_result].mean().reset_index()
+    country_store_avg = country_store_avg.sort_values(by=col_result, ascending=False)
+    fig_country_perf = px.bar(
+        country_store_avg,
+        x=col_store,
+        y=col_result,
+        text=col_result,
+        title=f"Store Performance in {country_selected_perf}",
+        labels={col_result: "Average Score"}
+    )
+    fig_country_perf.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+    fig_country_perf.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]))
+    st.plotly_chart(fig_country_perf)
+
+    # --- Country-wise Bell Curve ---
+    st.subheader("Country-wise Bell Curve")
+    fig_country = px.histogram(
+        drill_df,
+        x=col_result,
+        nbins=20,
+        color=col_audit_status,
+        hover_data=[col_entity_id, col_employee_name],
+        labels={col_result: "Performance Score"},
+        title=f"Performance Bell Curve for {country_selected_drill}",
+        color_discrete_map=status_colors
+    )
+    fig_country.update_traces(marker_line_color='black', marker_line_width=0.5)
+    st.plotly_chart(fig_country)
+
+    # --- Store-wise Bell Curve ---
+    st.subheader("Store-wise Bell Curve")
+    store_options = ["All"] + list(data_df[col_store].dropna().unique())
+    selected_store = st.selectbox("Select Store", store_options, key="drilldown_store")
+    store_df = data_df if selected_store == "All" else data_df[data_df[col_store] == selected_store]
+    store_label = "All Stores" if selected_store == "All" else selected_store
+
+    fig_store = px.histogram(
+        store_df,
+        x=col_result,
+        nbins=20,
+        color=col_audit_status,
+        hover_data=[col_country, col_entity_id, col_employee_name],
+        labels={col_result: "Performance Score"},
+        title=f"Performance Bell Curve for {store_label}",
+        color_discrete_map=status_colors
+    )
+    fig_store.update_traces(marker_line_color='black', marker_line_width=0.5)
+    st.plotly_chart(fig_store)
+
+    # --- Probability Distribution Chart ---
+    st.subheader("Probability Density of Performance Scores")
+    mean_score = data_df[col_result].mean()
+    std_dev = data_df[col_result].std()
+    x = np.linspace(data_df[col_result].min(), data_df[col_result].max(), 500)
+    pdf_y = norm.pdf(x, mean_score, std_dev)
+    fig_pdf = go.Figure()
+    fig_pdf.add_trace(go.Scatter(x=x, y=pdf_y, mode='lines', name='PDF'))
+    fig_pdf.add_vline(x=mean_score, line_dash='dash', line_color='green',
+                      annotation_text='Mean', annotation_position='top left')
+    fig_pdf.update_layout(
+        title='Probability Density Function (PDF) of Performance Scores',
+        xaxis_title='Performance Score',
+        yaxis_title='Probability Density'
+    )
+    st.plotly_chart(fig_pdf)
+    st.markdown(f"**Mean Score:** {mean_score:.2f}  \n**Standard Deviation:** {std_dev:.2f}")
+
+    # --- Score Distribution by Country ---
     st.subheader("Score Distribution by Country and Audit Status")
     fig_country_status = px.strip(
         data_df,
@@ -124,7 +209,6 @@ if uploaded_file is not None:
 
     # --- Consolidated Bell Curve with Performance Bands ---
     st.subheader("📈 Consolidated Bell Curve with Performance Bands")
-
     bell_scope = st.radio("Select Bell Curve Scope", ["Consolidated", "By Country", "By Store"], horizontal=True)
 
     if bell_scope == "Consolidated":
@@ -235,4 +319,3 @@ if uploaded_file is not None:
 
 else:
     st.info("Please upload a CSV or Excel file to begin.")
-
