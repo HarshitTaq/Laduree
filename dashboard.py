@@ -28,24 +28,12 @@ def find_column(columns, target_names):
             return columns[col_lower.index(t.lower())]
     return None
 
-# ---- Define consistent Audit Status Mapping ----
-def categorize_status(score):
-    if score <= 60:
-        return "Below Expectations"
-    elif 60.1 <= score <= 75.5:
-        return "Needs Improvement"
-    elif 75.6 <= score <= 95:
-        return "Meets Expectations"
-    elif score > 95:
-        return "Outstanding"
-    else:
-        return "Unknown"
-
+# Consistent color mapping
 status_colors = {
-    "Outstanding": "darkgreen",
-    "Meets Expectations": "lightgreen",
-    "Needs Improvement": "pink",
-    "Below Expectations": "red"
+    "Outstanding": "#006400",            # Dark Green
+    "Meets Expectations": "#32CD32",     # Brighter Green
+    "Needs Improvement": "#FFC0CB",      # Light Pink
+    "Below Expectations": "#FF0000"      # Red
 }
 
 uploaded_file = st.file_uploader("Upload your Performance CSV or Excel file (all months)", type=["csv", "xlsx", "xls"])
@@ -85,9 +73,6 @@ if uploaded_file is not None:
     df[col_submitted_for] = pd.to_datetime(df[col_submitted_for], errors='coerce')
     df = df.dropna(subset=[col_submitted_for])
 
-    # Add Audit Status if not consistent
-    df["Audit Category"] = df[col_result].apply(categorize_status)
-
     # Add Month-Year column for filtering
     df["__month_label__"] = df[col_submitted_for].dt.strftime('%B %Y')
     unique_months = sorted(df["__month_label__"].dropna().unique(), 
@@ -103,7 +88,7 @@ if uploaded_file is not None:
     else:
         data_df = df.copy()
 
-    # Country filter with "All"
+    # Country filters
     unique_countries = sorted(data_df[col_country].dropna().unique())
     country_options = ["All"] + unique_countries
     country_selected_perf = st.sidebar.selectbox("Country for 'Store Performance by Country'", country_options, key="perf_country")
@@ -112,7 +97,6 @@ if uploaded_file is not None:
     country_selected_drill = st.sidebar.selectbox("Country for 'Country-wise Bell Curve'", country_options, key="drill_country")
     drill_df = data_df if country_selected_drill == "All" else data_df[data_df[col_country] == country_selected_drill]
 
-    # KPI Country Filter
     country_selected_kpi = st.sidebar.selectbox("Country for 'Store and Individual KPI Analysis'", country_options, key="kpi_country")
     kpi_df = data_df if country_selected_kpi == "All" else data_df[data_df[col_country] == country_selected_kpi]
 
@@ -131,16 +115,17 @@ if uploaded_file is not None:
     # --- Store-wise Count by Audit Status ---
     st.subheader("📊 Store-wise Count by Audit Status")
     fig_store_audit_status = px.bar(
-        data_df.groupby([col_store, "Audit Category"]).size().reset_index(name='Count'),
+        data_df.groupby([col_store, col_audit_status]).size().reset_index(name='Count'),
         x=col_store,
         y='Count',
-        color="Audit Category",
+        color=col_audit_status,
         barmode='stack',
         title='Store-wise Count by Audit Status',
         labels={'Count': 'Number of Employees'},
         color_discrete_map=status_colors
     )
     fig_store_audit_status.update_layout(xaxis_tickangle=-45)
+    fig_store_audit_status.update_traces(marker_line_color='black', marker_line_width=0.5)
     st.plotly_chart(fig_store_audit_status)
 
     # --- Store Performance by Country ---
@@ -165,12 +150,13 @@ if uploaded_file is not None:
         drill_df,
         x=col_result,
         nbins=20,
-        color="Audit Category",
+        color=col_audit_status,
         hover_data=[col_entity_id, col_employee_name],
         labels={col_result: "Performance Score"},
         title=f"Performance Bell Curve for {country_selected_drill}",
         color_discrete_map=status_colors
     )
+    fig_country.update_traces(marker_line_color='black', marker_line_width=0.5)
     st.plotly_chart(fig_country)
 
     # --- Store-wise Bell Curve ---
@@ -184,12 +170,13 @@ if uploaded_file is not None:
         store_df,
         x=col_result,
         nbins=20,
-        color="Audit Category",
+        color=col_audit_status,
         hover_data=[col_country, col_entity_id, col_employee_name],
         labels={col_result: "Performance Score"},
         title=f"Performance Bell Curve for {store_label}",
         color_discrete_map=status_colors
     )
+    fig_store.update_traces(marker_line_color='black', marker_line_width=0.5)
     st.plotly_chart(fig_store)
 
     # --- Probability Distribution Chart ---
@@ -216,7 +203,7 @@ if uploaded_file is not None:
         data_df,
         x=col_country,
         y=col_result,
-        color="Audit Category",
+        color=col_audit_status,
         hover_data=[col_employee_name, col_store, col_entity_id],
         stripmode="overlay",
         labels={col_result: "Performance Score"},
@@ -269,4 +256,3 @@ if uploaded_file is not None:
         st.plotly_chart(fig_indkpi)
 else:
     st.info("Please upload a CSV or Excel file to begin.")
-
