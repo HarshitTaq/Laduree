@@ -213,6 +213,85 @@ if uploaded_file is not None:
     fig_country_status.update_layout(yaxis=dict(range=[0, 100]))
     st.plotly_chart(fig_country_status)
 
+    # --- Consolidated Bell Curve with Performance Bands ---
+st.subheader("📈 Consolidated Bell Curve with Performance Bands")
+
+# Choose dataset for consolidated, country-wise, or store-wise view
+bell_scope = st.radio("Select Bell Curve Scope", ["Consolidated", "By Country", "By Store"], horizontal=True)
+
+if bell_scope == "Consolidated":
+    bell_df = data_df.copy()
+    bell_title = "All Countries & Stores"
+elif bell_scope == "By Country":
+    bell_country = st.selectbox("Select Country", ["All"] + list(data_df[col_country].unique()))
+    if bell_country == "All":
+        bell_df = data_df.copy()
+        bell_title = "All Countries"
+    else:
+        bell_df = data_df[data_df[col_country] == bell_country]
+        bell_title = f"{bell_country}"
+else:  # By Store
+    bell_store = st.selectbox("Select Store", ["All"] + list(data_df[col_store].unique()))
+    if bell_store == "All":
+        bell_df = data_df.copy()
+        bell_title = "All Stores"
+    else:
+        bell_df = data_df[data_df[col_store] == bell_store]
+        bell_title = f"{bell_store}"
+
+if not bell_df.empty:
+    mean_score = bell_df[col_result].mean()
+    std_dev = bell_df[col_result].std()
+    x = np.linspace(0, 100, 500)
+    pdf_y = norm.pdf(x, mean_score, std_dev)
+
+    import plotly.graph_objects as go
+    fig_bell = go.Figure()
+
+    # Add histogram of scores
+    fig_bell.add_trace(go.Histogram(
+        x=bell_df[col_result],
+        nbinsx=20,
+        name="Scores",
+        marker_color="lightgrey",
+        marker_line_color="black",
+        marker_line_width=0.5,
+        opacity=0.6,
+        histnorm='probability'
+    ))
+
+    # Add PDF curve
+    fig_bell.add_trace(go.Scatter(
+        x=x, y=pdf_y,
+        mode='lines',
+        name="Bell Curve",
+        line=dict(color="blue", width=2)
+    ))
+
+    # Add shaded bands for audit status
+    fig_bell.add_vrect(x0=0, x1=60, fillcolor="#FF0000", opacity=0.2, line_width=0, annotation_text="Below Expectations", annotation_position="top left")
+    fig_bell.add_vrect(x0=60.1, x1=75.5, fillcolor="#FFC0CB", opacity=0.2, line_width=0, annotation_text="Needs Improvement", annotation_position="top left")
+    fig_bell.add_vrect(x0=75.6, x1=95, fillcolor="#32CD32", opacity=0.2, line_width=0, annotation_text="Meets Expectations", annotation_position="top left")
+    fig_bell.add_vrect(x0=95.1, x1=100, fillcolor="#006400", opacity=0.2, line_width=0, annotation_text="Outstanding", annotation_position="top left")
+
+    # Add Topline categories
+    fig_bell.add_annotation(x=20, y=max(pdf_y)/1.5, text="Non-Performers", showarrow=False, font=dict(size=12, color="black"))
+    fig_bell.add_annotation(x=60, y=max(pdf_y), text="Developing Performers", showarrow=False, font=dict(size=12, color="black"))
+    fig_bell.add_annotation(x=90, y=max(pdf_y)/1.5, text="Top Performers", showarrow=False, font=dict(size=12, color="black"))
+
+    # Layout
+    fig_bell.update_layout(
+        title=f"Performance Bell Curve for {bell_title}",
+        xaxis_title="Performance Score",
+        yaxis_title="Probability",
+        bargap=0.05
+    )
+
+    st.plotly_chart(fig_bell)
+else:
+    st.warning("No data available for the selected scope.")
+
+
     # --- Store KPI/Individual KPI Chart ---
     st.subheader("📈 Store and Individual KPI Analysis")
     kpi_options = ["All", "Store KPI", "Individual KPI"]
