@@ -119,57 +119,38 @@ if uploaded_file is not None:
     fig_store_audit_status.update_traces(marker_line_color='black', marker_line_width=0.5)
     st.plotly_chart(fig_store_audit_status)
 
-# --- 🏆 Store Performance by Country (Toggle View) ---
-st.subheader("🏆 Store Performance by Country")
+    # --- 🏆 Store Performance by Country (Toggle View) ---
+    st.subheader("🏆 Store Performance by Country")
+    view_scope = st.radio("Select View", ["Store View", "Country View"], horizontal=True)
 
-# Sidebar filter should already give you 'perf_df' and 'country_selected_perf'
-
-view_scope = st.radio("Select View", ["Store View", "Country View"], horizontal=True)
-
-if view_scope == "Store View":
-    st.markdown(f"### Store Performance in {country_selected_perf}")
-
-    country_store_avg = perf_df.groupby(col_store)[col_result].mean().reset_index()
-    country_store_avg = country_store_avg.sort_values(by=col_result, ascending=False)
-
-    fig_country_perf = px.bar(
-        country_store_avg,
-        x=col_store,
-        y=col_result,
-        text=col_result,
-        title=f"Store Performance in {country_selected_perf}",
-        labels={col_result: "Average Score"}
-    )
-    fig_country_perf.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-    fig_country_perf.update_layout(
-        xaxis_tickangle=-45,
-        yaxis=dict(range=[0, 100]),
-        height=600
-    )
-    st.plotly_chart(fig_country_perf)
-
-else:  # Country View
-    st.markdown("### 📊 Country-Wise Average Performance")
-
-    country_avg = perf_df.groupby(col_country)[col_result].mean().reset_index()
-    country_avg = country_avg.sort_values(by=col_result, ascending=False)
-
-    fig_country_avg = px.bar(
-        country_avg,
-        x=col_country,
-        y=col_result,
-        text=col_result,
-        title="Average Performance by Country",
-        labels={col_result: "Average Score"}
-    )
-    fig_country_avg.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-    fig_country_avg.update_layout(
-        xaxis_tickangle=-45,
-        yaxis=dict(range=[0, 100]),
-        height=600
-    )
-    st.plotly_chart(fig_country_avg)
-
+    if view_scope == "Store View":
+        st.markdown(f"### Store Performance in {country_selected_perf}")
+        country_store_avg = perf_df.groupby(col_store)[col_result].mean().reset_index()
+        country_store_avg = country_store_avg.sort_values(by=col_result, ascending=False)
+        fig_country_perf = px.bar(
+            country_store_avg,
+            x=col_store, y=col_result,
+            text=col_result,
+            title=f"Store Performance in {country_selected_perf}",
+            labels={col_result: "Average Score"}
+        )
+        fig_country_perf.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+        fig_country_perf.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]), height=600)
+        st.plotly_chart(fig_country_perf)
+    else:
+        st.markdown("### 📊 Country-Wise Average Performance")
+        country_avg = perf_df.groupby(col_country)[col_result].mean().reset_index()
+        country_avg = country_avg.sort_values(by=col_result, ascending=False)
+        fig_country_avg = px.bar(
+            country_avg,
+            x=col_country, y=col_result,
+            text=col_result,
+            title="Average Performance by Country",
+            labels={col_result: "Average Score"}
+        )
+        fig_country_avg.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+        fig_country_avg.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]), height=600)
+        st.plotly_chart(fig_country_avg)
 
     # --- Country-wise Bell Curve ---
     st.subheader("Country-wise Bell Curve")
@@ -196,7 +177,6 @@ else:  # Country View
     selected_store = st.selectbox("Select Store", store_options, key="drilldown_store")
     store_df = data_df if selected_store == "All" else data_df[data_df[col_store] == selected_store]
     store_label = "All Stores" if selected_store == "All" else selected_store
-
     fig_store = px.histogram(
         store_df, x=col_result, nbins=20, color=col_audit_status,
         hover_data=[col_country, col_entity_id, col_employee_name],
@@ -252,7 +232,7 @@ else:  # Country View
         else:
             bell_df = data_df[data_df[col_country] == bell_country]
             bell_title = f"{bell_country}"
-    else:  # By Store
+    else:
         bell_store = st.selectbox("Select Store", ["All"] + list(data_df[col_store].unique()))
         if bell_store == "All":
             bell_df = data_df.copy()
@@ -266,7 +246,6 @@ else:  # Country View
         std_dev = bell_df[col_result].std()
         x = np.linspace(0, 100, 500)
         pdf_y = norm.pdf(x, mean_score, std_dev)
-
         fig_bell = go.Figure()
         fig_bell.add_trace(go.Histogram(
             x=bell_df[col_result],
@@ -287,11 +266,7 @@ else:  # Country View
         fig_bell.add_vrect(x0=75.6, x1=95, fillcolor="#32CD32", opacity=0.2, line_width=0, annotation_text="Meets Expectations", annotation_position="top left")
         fig_bell.add_vrect(x0=95.1, x1=100, fillcolor="#006400", opacity=0.2, line_width=0, annotation_text="Outstanding", annotation_position="top left")
 
-        fig_bell.add_annotation(x=20, y=max(pdf_y)/1.5, text="Non-Performers", showarrow=False, font=dict(size=12, color="black"))
-        fig_bell.add_annotation(x=60, y=max(pdf_y), text="Developing Performers", showarrow=False, font=dict(size=12, color="black"))
-        fig_bell.add_annotation(x=90, y=max(pdf_y)/1.5, text="Top Performers", showarrow=False, font=dict(size=12, color="black"))
-
-        # Calculate % of employees in each range
+        # % Calculation
         total_count = len(bell_df)
         counts = {
             "Below Expectations": bell_df[bell_df[col_result] <= 60].shape[0],
@@ -300,107 +275,54 @@ else:  # Country View
             "Outstanding": bell_df[bell_df[col_result] > 95].shape[0],
         }
         percents = {k: (v / total_count * 100) if total_count > 0 else 0 for k, v in counts.items()}
+        fig_bell.add_annotation(x=30, y=max(pdf_y)*1.2, text=f"{percents['Below Expectations']:.1f}%", showarrow=False, font=dict(size=13, color="black"))
+        fig_bell.add_annotation(x=67, y=max(pdf_y)*1.2, text=f"{percents['Needs Improvement']:.1f}%", showarrow=False, font=dict(size=13, color="black"))
+        fig_bell.add_annotation(x=85, y=max(pdf_y)*1.2, text=f"{percents['Meets Expectations']:.1f}%", showarrow=False, font=dict(size=13, color="black"))
+        fig_bell.add_annotation(x=97, y=max(pdf_y)*1.2, text=f"{percents['Outstanding']:.1f}%", showarrow=False, font=dict(size=13, color="black"))
 
-        # Add percentage labels on top (no duplicate status text)
-        fig_bell.add_annotation(
-            x=30, y=max(pdf_y)*1.2,
-            text=f"{percents['Below Expectations']:.1f}%",
-            showarrow=False, font=dict(size=13, color="black")
-        )
-        fig_bell.add_annotation(
-            x=67, y=max(pdf_y)*1.2,
-            text=f"{percents['Needs Improvement']:.1f}%",
-            showarrow=False, font=dict(size=13, color="black")
-        )
-        fig_bell.add_annotation(
-            x=85, y=max(pdf_y)*1.2,
-            text=f"{percents['Meets Expectations']:.1f}%",
-            showarrow=False, font=dict(size=13, color="black")
-        )
-        fig_bell.add_annotation(
-            x=97, y=max(pdf_y)*1.2,
-            text=f"{percents['Outstanding']:.1f}%",
-            showarrow=False, font=dict(size=13, color="black")
-        )
-
-        # Update layout and render chart
-        fig_bell.update_layout(
-            title=f"Performance Bell Curve for {bell_title}",
-            xaxis_title="Performance Score",
-            yaxis_title="Probability",
-            bargap=0.05,
-            margin=dict(t=100)  # extra top space for percentages
-        )
+        fig_bell.update_layout(title=f"Performance Bell Curve for {bell_title}", xaxis_title="Performance Score", yaxis_title="Probability", bargap=0.05, margin=dict(t=100))
         st.plotly_chart(fig_bell)
 
-
-        # --- Employee Grid for Bell Curve Categories ---
+    # --- Employees by Performance Category ---
     st.subheader("Employees by Performance Category")
-
     category_options = ["All", "Below Expectations", "Needs Improvement", "Meets Expectations", "Outstanding"]
     selected_category = st.selectbox("Select Performance Category", category_options, index=0)
-
     bell_df["Performance Category"] = pd.cut(
-        bell_df[col_result],
-        bins=[0, 60, 75.5, 95, 100],
-        labels=["Below Expectations", "Needs Improvement", "Meets Expectations", "Outstanding"],
-        include_lowest=True
+        bell_df[col_result], bins=[0, 60, 75.5, 95, 100],
+        labels=["Below Expectations", "Needs Improvement", "Meets Expectations", "Outstanding"], include_lowest=True
     )
-
     if selected_category != "All":
         category_df = bell_df[bell_df["Performance Category"] == selected_category]
     else:
         category_df = bell_df.copy()
-
     if category_df.empty:
         st.warning(f"No employees found in {selected_category} category.")
     else:
-        st.dataframe(
-            category_df[[col_employee_name, col_store, col_country, col_audit_status, col_result, "Performance Category"]]
-            .sort_values(by=col_result, ascending=False)
-        )
-
+        st.dataframe(category_df[[col_employee_name, col_store, col_country, col_audit_status, col_result, "Performance Category"]].sort_values(by=col_result, ascending=False))
 
     # --- Store KPI/Individual KPI Chart ---
     st.subheader("📈 Store and Individual KPI Analysis")
     kpi_options = ["All", "Store KPI", "Individual KPI"]
     kpi_selected = st.selectbox("Select KPI for Store Chart", kpi_options)
-
     if kpi_selected == "All":
         avg_kpi = kpi_df.groupby(col_store)[[col_store_kpi, col_ind_kpi]].mean().reset_index()
         avg_kpi = avg_kpi.sort_values(by=col_store_kpi, ascending=False)
-        fig_kpi = px.bar(
-            avg_kpi.melt(id_vars=col_store, value_vars=[col_store_kpi, col_ind_kpi],
-                         var_name="KPI Type", value_name="Average"),
-            x=col_store, y="Average", color="KPI Type",
-            barmode="group",
-            title=f"Average Store KPI and Individual KPI by Store ({country_selected_kpi})"
-        )
+        fig_kpi = px.bar(avg_kpi.melt(id_vars=col_store, value_vars=[col_store_kpi, col_ind_kpi], var_name="KPI Type", value_name="Average"),
+                         x=col_store, y="Average", color="KPI Type", barmode="group", title=f"Average Store KPI and Individual KPI by Store ({country_selected_kpi})")
         fig_kpi.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig_kpi)
-    elif kpi_selected == "Store KPI":
-        avg_store_kpi = kpi_df.groupby(col_store)[col_store_kpi].mean().reset_index()
-        avg_store_kpi = avg_store_kpi.sort_values(by=col_store_kpi, ascending=False)
-        fig_storekpi = px.bar(
-            avg_store_kpi,
-            x=col_store, y=col_store_kpi,
-            title=f"Average Store KPI by Store ({country_selected_kpi})",
-            labels={col_store_kpi: "Average Store KPI"}
-        )
-        fig_storekpi.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig_storekpi)
-    elif kpi_selected == "Individual KPI":
-        avg_ind_kpi = kpi_df.groupby(col_store)[col_ind_kpi].mean().reset_index()
-        avg_ind_kpi = avg_ind_kpi.sort_values(by=col_ind_kpi, ascending=False)
-        fig_indkpi = px.bar(
-            avg_ind_kpi,
-            x=col_store, y=col_ind_kpi,
-            title=f"Average Individual KPI by Store ({country_selected_kpi})",
-            labels={col_ind_kpi: "Average Individual KPI"}
-        )
-        fig_indkpi.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig_indkpi)
+st.plotly_chart(fig_kpi)
+elif kpi_selected == "Store KPI":
+avg_store_kpi = kpi_df.groupby(col_store)[col_store_kpi].mean().reset_index()
+avg_store_kpi = avg_store_kpi.sort_values(by=col_store_kpi, ascending=False)
+fig_storekpi = px.bar(avg_store_kpi, x=col_store, y=col_store_kpi, title=f"Average Store KPI by Store ({country_selected_kpi})", labels={col_store_kpi: "Average Store KPI"})
+fig_storekpi.update_layout(xaxis_tickangle=-45)
+st.plotly_chart(fig_storekpi)
+elif kpi_selected == "Individual KPI":
+avg_ind_kpi = kpi_df.groupby(col_store)[col_ind_kpi].mean().reset_index()
+avg_ind_kpi = avg_ind_kpi.sort_values(by=col_ind_kpi, ascending=False)
+fig_indkpi = px.bar(avg_ind_kpi, x=col_store, y=col_ind_kpi, title=f"Average Individual KPI by Store ({country_selected_kpi})", labels={col_ind_kpi: "Average Individual KPI"})
+fig_indkpi.update_layout(xaxis_tickangle=-45)
+st.plotly_chart(fig_indkpi)
 
 else:
-    st.info("Please upload a CSV or Excel file to begin.")
-
+st.info("Please upload a CSV or Excel file to begin.")
