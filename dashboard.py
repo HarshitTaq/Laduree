@@ -400,6 +400,6 @@ else:  # Country View
         )
         fig_indkpi.update_layout(xaxis_tickangle=-45)
         st.plotly_chart(fig_indkpi)
-
-else:
+        
+    else:
     st.info("Please upload a CSV or Excel file to begin.")
