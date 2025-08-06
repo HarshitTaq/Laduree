@@ -133,6 +133,21 @@ if uploaded_file is not None:
     fig_country_perf.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]))
     st.plotly_chart(fig_country_perf)
 
+    # --- Performance by Country ---
+    st.subheader("🏆 Performance by Country")
+    country_avg = perf_df.groupby(col_country)[col_result].mean().reset_index()
+    country_avg = country_avg.sort_values(by=col_result, ascending=False)
+    fig_perf_by_country = px.bar(
+        country_avg,
+        x=col_country,
+        y=col_result,
+        text=col_result,
+        labels={col_country: "Country", col_result: "Average Score"},
+        title="Average Performance by Country"
+    )
+    fig_perf_by_country.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+    fig_perf_by_country.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]))
+    st.plotly_chart(fig_perf_by_country)
 
 
     
