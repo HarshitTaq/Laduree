@@ -253,6 +253,39 @@ if uploaded_file is not None:
         fig_bell.add_annotation(x=60, y=max(pdf_y), text="Developing Performers", showarrow=False, font=dict(size=12, color="black"))
         fig_bell.add_annotation(x=90, y=max(pdf_y)/1.5, text="Top Performers", showarrow=False, font=dict(size=12, color="black"))
 
+        # Calculate % of employees in each range
+        total_count = len(bell_df)
+        counts = {
+            "Below Expectations": bell_df[bell_df[col_result] <= 60].shape[0],
+            "Needs Improvement": bell_df[(bell_df[col_result] > 60) & (bell_df[col_result] <= 75.5)].shape[0],
+            "Meets Expectations": bell_df[(bell_df[col_result] > 75.5) & (bell_df[col_result] <= 95)].shape[0],
+            "Outstanding": bell_df[bell_df[col_result] > 95].shape[0],
+        }
+        percents = {k: (v / total_count * 100) if total_count > 0 else 0 for k, v in counts.items()}
+
+        # Add percentage labels on the curve
+        fig_bell.add_annotation(
+            x=30, y=max(pdf_y)/2,
+            text=f"Below Expectations: {percents['Below Expectations']:.1f}%",
+            showarrow=False, font=dict(size=12, color="black")
+        )
+        fig_bell.add_annotation(
+            x=67, y=max(pdf_y)*0.9,
+            text=f"Needs Improvement: {percents['Needs Improvement']:.1f}%",
+            showarrow=False, font=dict(size=12, color="black")
+        )
+        fig_bell.add_annotation(
+            x=85, y=max(pdf_y)/2,
+            text=f"Meets Expectations: {percents['Meets Expectations']:.1f}%",
+            showarrow=False, font=dict(size=12, color="black")
+        )
+        fig_bell.add_annotation(
+            x=97, y=max(pdf_y)/3,
+            text=f"Outstanding: {percents['Outstanding']:.1f}%",
+            showarrow=False, font=dict(size=12, color="black")
+        )
+
+        # Update layout and render chart
         fig_bell.update_layout(
             title=f"Performance Bell Curve for {bell_title}",
             xaxis_title="Performance Score",
