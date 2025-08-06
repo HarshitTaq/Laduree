@@ -354,5 +354,22 @@ if uploaded_file is not None:
         fig_indkpi.update_layout(xaxis_tickangle=-45)
         st.plotly_chart(fig_indkpi)
 
+    # --- KPI Details Grid ---
+    st.subheader("📋 Employee KPI Details")
+
+    kpi_grid = kpi_df[[col_employee_name, col_store, col_store_kpi, col_ind_kpi]].copy()
+    kpi_grid = kpi_grid.rename(columns={
+        col_employee_name: "Employee Name",
+        col_store: "Store",
+        col_store_kpi: "Store KPI",
+        col_ind_kpi: "Individual KPI"
+    })
+
+    st.dataframe(
+        kpi_grid.sort_values(by="Store KPI", ascending=False),
+        use_container_width=True
+    )
+
+
 else:
     st.info("Please upload a CSV or Excel file to begin.")
