@@ -283,7 +283,7 @@ if uploaded_file is not None:
 
         # Add percentage labels on top (no duplicate status text)
         fig_bell.add_annotation(
-            x=30, y=max(pdf_y)*15,
+            x=30, y=max(pdf_y)*14,
             text=f"{percents['Below Expectations']:.1f}%",
             showarrow=False, font=dict(size=13, color="black")
         )
@@ -293,12 +293,12 @@ if uploaded_file is not None:
             showarrow=False, font=dict(size=13, color="black")
         )
         fig_bell.add_annotation(
-            x=85, y=max(pdf_y)*1.2,
+            x=85, y=max(pdf_y)*14,
             text=f"{percents['Meets Expectations']:.1f}%",
             showarrow=False, font=dict(size=13, color="black")
         )
         fig_bell.add_annotation(
-            x=97, y=max(pdf_y)*1.2,
+            x=97, y=max(pdf_y)*14,
             text=f"{percents['Outstanding']:.1f}%",
             showarrow=False, font=dict(size=13, color="black")
         )
