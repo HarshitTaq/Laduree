@@ -119,7 +119,7 @@ if uploaded_file is not None:
     fig_store_audit_status.update_traces(marker_line_color='black', marker_line_width=0.5)
     st.plotly_chart(fig_store_audit_status)
 
-    # --- Store Performance by Country ---
+    # --- Performance by Store ---
     st.subheader("🏆 Performance by Store")
     country_store_avg = perf_df.groupby(col_store)[col_result].mean().reset_index()
     country_store_avg = country_store_avg.sort_values(by=col_result, ascending=False)
@@ -133,6 +133,23 @@ if uploaded_file is not None:
     fig_country_perf.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]))
     st.plotly_chart(fig_country_perf)
 
+# --- Performance by Country ---
+st.subheader("🏆 Performance by Country")
+country_avg = perf_df.groupby(col_country)[col_result].mean().reset_index()
+country_avg = country_avg.sort_values(by=col_result, ascending=False)
+fig_perf_by_country = px.bar(
+    country_avg,
+    x=col_country,
+    y=col_result,
+    text=col_result,
+    labels={col_country: "Country", col_result: "Average Score"},
+    title="Average Performance by Country"
+)
+fig_perf_by_country.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+fig_perf_by_country.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]))
+st.plotly_chart(fig_perf_by_country)
+
+    
     # --- Country-wise Bell Curve ---
     st.subheader("Country-wise Bell Curve")
     fig_country = px.histogram(
