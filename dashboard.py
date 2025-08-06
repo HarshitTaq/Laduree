@@ -288,7 +288,7 @@ if uploaded_file is not None:
             showarrow=False, font=dict(size=13, color="black")
         )
         fig_bell.add_annotation(
-            x=67, y=max(pdf_y)*1.2,
+            x=67, y=max(pdf_y)*10,
             text=f"{percents['Needs Improvement']:.1f}%",
             showarrow=False, font=dict(size=13, color="black")
         )
