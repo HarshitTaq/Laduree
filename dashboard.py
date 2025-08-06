@@ -253,13 +253,48 @@ if uploaded_file is not None:
         fig_bell.add_annotation(x=60, y=max(pdf_y), text="Developing Performers", showarrow=False, font=dict(size=12, color="black"))
         fig_bell.add_annotation(x=90, y=max(pdf_y)/1.5, text="Top Performers", showarrow=False, font=dict(size=12, color="black"))
 
+        # Calculate % of employees in each range
+        total_count = len(bell_df)
+        counts = {
+            "Below Expectations": bell_df[bell_df[col_result] <= 60].shape[0],
+            "Needs Improvement": bell_df[(bell_df[col_result] > 60) & (bell_df[col_result] <= 75.5)].shape[0],
+            "Meets Expectations": bell_df[(bell_df[col_result] > 75.5) & (bell_df[col_result] <= 95)].shape[0],
+            "Outstanding": bell_df[bell_df[col_result] > 95].shape[0],
+        }
+        percents = {k: (v / total_count * 100) if total_count > 0 else 0 for k, v in counts.items()}
+
+        # Add percentage labels on top (no duplicate status text)
+        fig_bell.add_annotation(
+            x=30, y=max(pdf_y)*1.2,
+            text=f"{percents['Below Expectations']:.1f}%",
+            showarrow=False, font=dict(size=13, color="black")
+        )
+        fig_bell.add_annotation(
+            x=67, y=max(pdf_y)*1.2,
+            text=f"{percents['Needs Improvement']:.1f}%",
+            showarrow=False, font=dict(size=13, color="black")
+        )
+        fig_bell.add_annotation(
+            x=85, y=max(pdf_y)*1.2,
+            text=f"{percents['Meets Expectations']:.1f}%",
+            showarrow=False, font=dict(size=13, color="black")
+        )
+        fig_bell.add_annotation(
+            x=97, y=max(pdf_y)*1.2,
+            text=f"{percents['Outstanding']:.1f}%",
+            showarrow=False, font=dict(size=13, color="black")
+        )
+
+        # Update layout and render chart
         fig_bell.update_layout(
             title=f"Performance Bell Curve for {bell_title}",
             xaxis_title="Performance Score",
             yaxis_title="Probability",
-            bargap=0.05
+            bargap=0.05,
+            margin=dict(t=100)  # extra top space for percentages
         )
         st.plotly_chart(fig_bell)
+
 
     # --- Store KPI/Individual KPI Chart ---
     st.subheader("📈 Store and Individual KPI Analysis")
