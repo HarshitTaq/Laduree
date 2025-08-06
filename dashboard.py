@@ -402,4 +402,4 @@ else:  # Country View
         st.plotly_chart(fig_indkpi)
         
     else:
-    st.info("Please upload a CSV or Excel file to begin.")
+        st.info("Please upload a CSV or Excel file to begin.")
