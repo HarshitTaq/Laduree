@@ -85,7 +85,7 @@ if uploaded_file is not None:
 
     unique_countries = sorted(data_df[col_country].dropna().unique())
     country_options = ["All"] + unique_countries
-    country_selected_perf = st.sidebar.selectbox("Country for 'Store Performance by Country'", country_options, key="perf_country")
+    country_selected_perf = st.sidebar.selectbox("Country for 'Performance by Store'", country_options, key="perf_country")
     perf_df = data_df if country_selected_perf == "All" else data_df[data_df[col_country] == country_selected_perf]
 
     country_selected_drill = st.sidebar.selectbox("Country for 'Country-wise Bell Curve'", country_options, key="drill_country")
@@ -120,7 +120,7 @@ if uploaded_file is not None:
     st.plotly_chart(fig_store_audit_status)
 
     # --- Store Performance by Country ---
-    st.subheader("🏆 Store Performance by Country")
+    st.subheader("🏆 Performance by Store")
     country_store_avg = perf_df.groupby(col_store)[col_result].mean().reset_index()
     country_store_avg = country_store_avg.sort_values(by=col_result, ascending=False)
     fig_country_perf = px.bar(
