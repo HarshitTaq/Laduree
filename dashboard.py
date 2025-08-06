@@ -397,9 +397,10 @@ else:  # Country View
             x=col_store, y=col_ind_kpi,
             title=f"Average Individual KPI by Store ({country_selected_kpi})",
             labels={col_ind_kpi: "Average Individual KPI"}
+
         )
         fig_indkpi.update_layout(xaxis_tickangle=-45)
         st.plotly_chart(fig_indkpi)
-        
-    else:
-        st.info("Please upload a CSV or Excel file to begin.")
+
+else:
+    st.info("Please upload a CSV or Excel file to begin.")
