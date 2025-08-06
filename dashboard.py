@@ -119,19 +119,57 @@ if uploaded_file is not None:
     fig_store_audit_status.update_traces(marker_line_color='black', marker_line_width=0.5)
     st.plotly_chart(fig_store_audit_status)
 
-    # --- Store Performance by Country ---
-    st.subheader("🏆 Store Performance by Country")
+# --- 🏆 Store Performance by Country (Toggle View) ---
+st.subheader("🏆 Store Performance by Country")
+
+# Sidebar filter should already give you 'perf_df' and 'country_selected_perf'
+
+view_scope = st.radio("Select View", ["Store View", "Country View"], horizontal=True)
+
+if view_scope == "Store View":
+    st.markdown(f"### Store Performance in {country_selected_perf}")
+
     country_store_avg = perf_df.groupby(col_store)[col_result].mean().reset_index()
     country_store_avg = country_store_avg.sort_values(by=col_result, ascending=False)
+
     fig_country_perf = px.bar(
         country_store_avg,
-        x=col_store, y=col_result, text=col_result,
-        labels={col_result: "Average Score"},
-        title=f"Store Performance in {country_selected_perf}"
+        x=col_store,
+        y=col_result,
+        text=col_result,
+        title=f"Store Performance in {country_selected_perf}",
+        labels={col_result: "Average Score"}
     )
     fig_country_perf.update_traces(texttemplate='%{text:.2f}', textposition='outside')
-    fig_country_perf.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]))
+    fig_country_perf.update_layout(
+        xaxis_tickangle=-45,
+        yaxis=dict(range=[0, 100]),
+        height=600
+    )
     st.plotly_chart(fig_country_perf)
+
+else:  # Country View
+    st.markdown("### 📊 Country-Wise Average Performance")
+
+    country_avg = perf_df.groupby(col_country)[col_result].mean().reset_index()
+    country_avg = country_avg.sort_values(by=col_result, ascending=False)
+
+    fig_country_avg = px.bar(
+        country_avg,
+        x=col_country,
+        y=col_result,
+        text=col_result,
+        title="Average Performance by Country",
+        labels={col_result: "Average Score"}
+    )
+    fig_country_avg.update_traces(texttemplate='%{text:.2f}', textposition='outside')
+    fig_country_avg.update_layout(
+        xaxis_tickangle=-45,
+        yaxis=dict(range=[0, 100]),
+        height=600
+    )
+    st.plotly_chart(fig_country_avg)
+
 
     # --- Country-wise Bell Curve ---
     st.subheader("Country-wise Bell Curve")
