@@ -288,17 +288,17 @@ if uploaded_file is not None:
             showarrow=False, font=dict(size=13, color="black")
         )
         fig_bell.add_annotation(
-            x=67, y=max(pdf_y)*7,
+            x=67, y=max(pdf_y)*3,
             text=f"{percents['Needs Improvement']:.1f}%",
             showarrow=False, font=dict(size=13, color="black")
         )
         fig_bell.add_annotation(
-            x=85, y=max(pdf_y)*7,
+            x=85, y=max(pdf_y)*3,
             text=f"{percents['Meets Expectations']:.1f}%",
             showarrow=False, font=dict(size=13, color="black")
         )
         fig_bell.add_annotation(
-            x=97, y=max(pdf_y)*7,
+            x=97, y=max(pdf_y)*3,
             text=f"{percents['Outstanding']:.1f}%",
             showarrow=False, font=dict(size=13, color="black")
         )
