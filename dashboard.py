@@ -401,6 +401,12 @@ if uploaded_file is not None:
     x="Employee Name",
     y="Individual KPI",
     color="Audit Status",
+    color_discrete_map={
+        "Below Expectations": "#FF0000",
+        "Needs Improvement": "#FFC0CB",
+        "Meets Expectations": "#32CD32",
+        "Outstanding": "#006400"
+    },
     title="Individual KPI Scores by Employee",
     labels={"Individual KPI": "KPI Score"},
     )
