@@ -377,23 +377,23 @@ if uploaded_file is not None:
 
     # Apply Audit Status Filter
     if audit_status_filter == "All":
-    filtered_kpi = kpi_df.copy()
+        filtered_kpi = kpi_df.copy()
     else:
-    filtered_kpi = kpi_df[kpi_df["Audit Status"] == audit_status_filter]
+        filtered_kpi = kpi_df[kpi_df["Audit Status"] == audit_status_filter]
 
     # --- Scope Selector ---
     scope_option = st.radio("Select Scope", ["Consolidated", "By Store", "By Country"])
 
     if scope_option == "Consolidated":
-    scope_df = filtered_kpi.copy()
+        scope_df = filtered_kpi.copy()
 
     elif scope_option == "By Store":
-    selected_store = st.selectbox("Select Store", options=sorted(filtered_kpi["Store"].unique()))
-    scope_df = filtered_kpi[filtered_kpi["Store"] == selected_store]
+        selected_store = st.selectbox("Select Store", options=sorted(filtered_kpi["Store"].unique()))
+        scope_df = filtered_kpi[filtered_kpi["Store"] == selected_store]
 
     elif scope_option == "By Country":
-    selected_country = st.selectbox("Select Country", options=sorted(filtered_kpi["Country"].unique()))
-    scope_df = filtered_kpi[filtered_kpi["Country"] == selected_country]
+        selected_country = st.selectbox("Select Country", options=sorted(filtered_kpi["Country"].unique()))
+        scope_df = filtered_kpi[filtered_kpi["Country"] == selected_country]
 
     # --- Plot the KPI Chart ---
     fig_emp_kpi = px.bar(
