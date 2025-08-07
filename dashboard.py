@@ -415,5 +415,5 @@ st.dataframe(
 )
 
 
-else:
+    else:
     st.info("Please upload a CSV or Excel file to begin.")
