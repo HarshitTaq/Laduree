@@ -396,6 +396,7 @@ if uploaded_file is not None:
         scope_df = filtered_kpi[filtered_kpi["Country"] == selected_country]
 
     # --- Plot the KPI Chart ---
+    scope_df = scope_df.sort_values(by="Individual KPI", ascending=False)
     fig_emp_kpi = px.bar(
     scope_df,
     x="Employee Name",
