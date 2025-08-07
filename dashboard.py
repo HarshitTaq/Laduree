@@ -369,6 +369,48 @@ if uploaded_file is not None:
         kpi_grid.sort_values(by="Store KPI", ascending=False),
         use_container_width=True
     )
+# --- Employee Performance Visual (Based on Individual KPI) ---
+st.subheader("🎯 Employee Performance Analysis by KPI Band")
+
+band_scope = st.radio("Select KPI View Scope", ["Consolidated", "By Country", "By Store"])
+kpi_band_data = kpi_df.copy()
+
+# Categorize Individual KPI
+def categorize_kpi(score):
+    if score < 60:
+        return 'Below Expectations'
+    elif 60 <= score <= 75.5:
+        return 'Needs Improvement / Meets Expectations'
+    else:
+        return 'Outstanding'
+
+kpi_band_data['Performance Category'] = kpi_band_data[col_ind_kpi].apply(categorize_kpi)
+
+if band_scope == "Consolidated":
+    band_summary = kpi_band_data['Performance Category'].value_counts(normalize=True).mul(100).round(2).reset_index()
+    band_summary.columns = ['Performance Category', 'Percentage']
+    fig_band = px.pie(band_summary, names='Performance Category', values='Percentage',
+                      title="Consolidated Employee Performance Distribution")
+    st.plotly_chart(fig_band)
+    st.dataframe(kpi_band_data[['Employee Name', col_store, 'Country', col_ind_kpi, 'Performance Category']])
+
+elif band_scope == "By Country":
+    band_summary = kpi_band_data.groupby('Country')['Performance Category']\
+                    .value_counts(normalize=True).unstack().fillna(0).mul(100).round(2).reset_index()
+    band_summary = pd.melt(band_summary, id_vars='Country', var_name='Performance Category', value_name='Percentage')
+    fig_band = px.bar(band_summary, x='Country', y='Percentage', color='Performance Category',
+                      barmode='group', title="Country-wise Employee Performance Distribution")
+    st.plotly_chart(fig_band)
+    st.dataframe(kpi_band_data[['Employee Name', col_store, 'Country', col_ind_kpi, 'Performance Category']])
+
+elif band_scope == "By Store":
+    band_summary = kpi_band_data.groupby(col_store)['Performance Category']\
+                    .value_counts(normalize=True).unstack().fillna(0).mul(100).round(2).reset_index()
+    band_summary = pd.melt(band_summary, id_vars=col_store, var_name='Performance Category', value_name='Percentage')
+    fig_band = px.bar(band_summary, x=col_store, y='Percentage', color='Performance Category',
+                      barmode='group', title="Store-wise Employee Performance Distribution")
+    st.plotly_chart(fig_band)
+    st.dataframe(kpi_band_data[['Employee Name', col_store, 'Country', col_ind_kpi, 'Performance Category']])
 
 
 else:
