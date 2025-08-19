@@ -262,16 +262,28 @@ if uploaded_file is not None:
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    # Apply your filters dynamically (example)
+    filtered_df = df.copy()
+
+    # Example filters (replace with your actual ones)
+    if selected_country != "All":
+    filtered_df = filtered_df[filtered_df["Country"] == selected_country]
+
+    if selected_store != "All":
+        filtered_df = filtered_df[filtered_df["Store"] == selected_store]
+
     # Add serial number starting from 1
     filtered_df = filtered_df.copy()
     filtered_df["S.No"] = range(1, len(filtered_df) + 1)
 
     # Reorder columns so S.No comes first
-    filtered_df = filtered_df[["S.No", "Employee Name", "Store", "Country", "State", "Individual KPI", "Status"]]
+    filtered_df = filtered_df[[
+        "S.No", "Employee Name", "Store", "Country",
+        "State", "Individual KPI", "Status"
+    ]]
 
     # Display grid without the default index
     st.dataframe(filtered_df, use_container_width=True, hide_index=True)
-
 
     
     
