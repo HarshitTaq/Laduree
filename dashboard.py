@@ -351,7 +351,7 @@ if uploaded_file is not None:
             marker_line_color="black",
             marker_line_width=0.5,
             opacity=0.6,
-            histnorm='probability'
+            histnorm='percent'
         ))
         fig_bell.add_trace(go.Scatter(
             x=x, y=pdf_y, mode='lines',
@@ -402,7 +402,7 @@ if uploaded_file is not None:
         fig_bell.update_layout(
             title=f"Performance Bell Curve for {bell_title}",
             xaxis_title="Performance Score",
-            yaxis_title="Probability",
+            yaxis_title="Percentage%",
             bargap=0.05,
             margin=dict(t=100)  # extra top space for percentages
         )
