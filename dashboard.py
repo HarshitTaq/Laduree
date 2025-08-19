@@ -208,7 +208,7 @@ if uploaded_file is not None:
 
         
     # 🎯 Employee KPI Performance Visual
-    st.header("🎯 Employee Performance Based on Individual KPI")
+    st.header("🎯 Employee Pie Chart on Individual KPI")
     
     st.markdown("""
     **Performance Band Criteria**
