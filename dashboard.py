@@ -344,6 +344,15 @@ if uploaded_file is not None:
         
     # 🎯 Employee KPI Performance Visual
     st.header("🎯 Employee Performance Based on Individual KPI")
+    
+    st.markdown("""
+    **Performance Band Criteria**
+
+    - **Below Expectations** → Score ≤ 60  
+    - **Needs Improvement** → 60.1 – 75.5  
+    - **Meets Expectations** → 75.6 – 95  
+    - **Outstanding** → Score > 95  
+    """)
 
     # --- Step 1: Derive Status Column ---
     def get_status(score):
