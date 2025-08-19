@@ -269,8 +269,7 @@ if uploaded_file is not None:
     if selected_country != "All":
         filtered_df = filtered_df[filtered_df["Country"] == selected_country]
 
-    if selected_store != "All":
-        filtered_df = filtered_df[filtered_df["Store"] == selected_store]
+
 
     # Add serial number starting from 1
     filtered_df = filtered_df.copy()
