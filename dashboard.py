@@ -267,7 +267,7 @@ if uploaded_file is not None:
 
     # Example filters (replace with your actual ones)
     if selected_country != "All":
-    filtered_df = filtered_df[filtered_df["Country"] == selected_country]
+        filtered_df = filtered_df[filtered_df["Country"] == selected_country]
 
     if selected_store != "All":
         filtered_df = filtered_df[filtered_df["Store"] == selected_store]
