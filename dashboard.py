@@ -338,61 +338,13 @@ if uploaded_file is not None:
             margin=dict(t=100)  # extra top space for percentages
         )
         st.plotly_chart(fig_bell)
+        
 
 
-
-    
+        
     # 🎯 Employee KPI Performance Visual
     st.header("🎯 Employee Performance Based on Individual KPI")
 
-    # --- Audit Status Filter ---
-    audit_status_filter = st.selectbox("Filter by Audit Status", options=["All"] + sorted(kpi_df["Audit Status"].unique()))
-
-    # Apply Audit Status Filter
-    if audit_status_filter == "All":
-        filtered_kpi = kpi_df.copy()
-    else:
-        filtered_kpi = kpi_df[kpi_df["Audit Status"] == audit_status_filter]
-
-    # --- Scope Selector ---
-    scope_option = st.radio("Select Scope", ["Consolidated", "By Store", "By Country"])
-
-    if scope_option == "Consolidated":
-        scope_df = filtered_kpi.copy()
-
-    elif scope_option == "By Store":
-        selected_store = st.selectbox("Select Store", options=sorted(filtered_kpi["Store"].unique()))
-        scope_df = filtered_kpi[filtered_kpi["Store"] == selected_store]
-
-    elif scope_option == "By Country":
-        selected_country = st.selectbox("Select Country", options=sorted(filtered_kpi["Country"].unique()))
-        scope_df = filtered_kpi[filtered_kpi["Country"] == selected_country]
-
-    # --- Plot the KPI Chart ---
-    
-    fig_emp_kpi = px.bar(
-    scope_df,
-    x="Employee Name",
-    y="Individual KPI",
-    color="Audit Status",
-    color_discrete_map={
-        "Below Expectations": "#FF0000",
-        "Needs Improvement": "#FFC0CB",
-        "Meets Expectations": "#32CD32",
-        "Outstanding": "#006400"
-    },
-    title="Individual KPI Scores by Employee",
-    labels={"Individual KPI": "KPI Score"},
-    )
-    fig_emp_kpi.update_layout(xaxis_tickangle=-45)
-    st.plotly_chart(fig_emp_kpi, use_container_width=True)
-
-    # --- Employee KPI Grid ---
-    st.subheader("📋 Employee KPI Grid")
-    st.dataframe(
-    scope_df[["Employee Name", "Store", "Country", "Individual KPI", "Audit Status"]],
-    use_container_width=True
-    )
     # --- Step 1: Derive Status Column ---
     def get_status(score):
         if score <= 60:
