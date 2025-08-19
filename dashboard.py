@@ -406,6 +406,13 @@ if uploaded_file is not None:
             bargap=0.05,
             margin=dict(t=100)  # extra top space for percentages
         )
+        fig_bell.update_layout(
+            title=f"Performance Bell Curve for {bell_title}",
+            xaxis_title="Performance Score",
+            yaxis_title="Percentage%",
+            bargap=0.05,
+            margin=dict(t=100)  # extra top space for percentages
+        )
         st.plotly_chart(fig_bell)
         
 
