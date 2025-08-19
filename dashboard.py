@@ -364,7 +364,7 @@ if uploaded_file is not None:
         fig_bell.add_vrect(x0=95.1, x1=100, fillcolor="#006400", opacity=0.7, line_width=0, annotation_text="Outstanding", annotation_position="top left")
 
         fig_bell.add_annotation(x=30, y=max(pdf_y)/1.5, text="Non-Performers", showarrow=False, font=dict(size=12, color="black"))
-        fig_bell.add_annotation(x=75, y=max(pdf_y)/.5, text="Developing Performers", showarrow=False, font=dict(size=12, color="black"))
+        fig_bell.add_annotation(x=75, y=max(pdf_y)/.9, text="Developing Performers", showarrow=False, font=dict(size=12, color="black"))
         fig_bell.add_annotation(x=100, y=max(pdf_y)/1.5, text="Top Performers", showarrow=False, font=dict(size=12, color="black"))
 
         # Calculate % of employees in each range
