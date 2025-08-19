@@ -263,7 +263,7 @@ if uploaded_file is not None:
     st.plotly_chart(fig, use_container_width=True)
 
     # Apply your filters dynamically (example)
-    filtered_df = df.copy()
+
 
     # Example filters (replace with your actual ones)
     if selected_country != "All":
