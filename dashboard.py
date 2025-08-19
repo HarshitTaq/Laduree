@@ -358,7 +358,7 @@ if uploaded_file is not None:
             x=x, y=pdf_y, mode='lines',
             name="Bell Curve", line=dict(color="blue", width=2)
         ))
-        fig_bell.add_vrect(x0=0, x1=60, fillcolor="#FF0000", opacity=0.7, line_width=0, annotation_text="Below Expectations", annotation_position="top left")
+        fig_bell.add_vrect(x0=0, x1=60, fillcolor="#FF0000", opacity=0.7, line_width=0, annotation_text="Below Expectations", annotation_position="top left", annotation=dict(font=dict(color="black"))
         fig_bell.add_vrect(x0=60.1, x1=75.5, fillcolor="#FFC0CB", opacity=0.7, line_width=0, annotation_text="N/I", annotation_position="top left")
         fig_bell.add_vrect(x0=75.6, x1=95, fillcolor="#32CD32", opacity=0.7, line_width=0, annotation_text="M/E", annotation_position="top left")
         fig_bell.add_vrect(x0=95.1, x1=100, fillcolor="#006400", opacity=0.7, line_width=0, annotation_text="Outstanding", annotation_position="top left")
