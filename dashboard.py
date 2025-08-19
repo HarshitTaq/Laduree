@@ -351,7 +351,7 @@ if uploaded_file is not None:
             marker_line_color="black",
             marker_line_width=0.5,
             opacity=0.6,
-            histnorm='percent'
+            histnorm='Probability'
         ))
         fig_bell.add_trace(go.Scatter(
             x=x, y=pdf_y, mode='lines',
