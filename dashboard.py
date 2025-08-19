@@ -395,14 +395,14 @@ if uploaded_file is not None:
     )
     # --- Step 1: Derive Status Column ---
     def get_status(score):
-    if score <= 60:
-        return "Below Expectations"
-    elif 60.1 <= score <= 75.5:
-        return "Needs Improvement"
-    elif 75.6 <= score <= 95:
-        return "Meets Expectations"
-    else:
-        return "Outstanding"
+        if score <= 60:
+            return "Below Expectations"
+        elif 60.1 <= score <= 75.5:
+            return "Needs Improvement"
+        elif 75.6 <= score <= 95:
+            return "Meets Expectations"
+        else:
+            return "Outstanding"
 
     df["Status"] = df["Individual KPI"].apply(get_status)
 
