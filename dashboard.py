@@ -321,7 +321,7 @@ if uploaded_file is not None:
         bell_df = data_df.copy()
         bell_title = "All Countries & Stores"
     elif bell_scope == "By Country":
-        bell_country = st.selectbox("Select Country", ["All"] + list(data_df[col_country].unique()))
+        bell_country = st.selectbox("Select Country For Bell Curve", ["All"] + list(data_df[col_country].unique()))
         if bell_country == "All":
             bell_df = data_df.copy()
             bell_title = "All Countries"
