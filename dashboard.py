@@ -149,6 +149,61 @@ if uploaded_file is not None:
     fig_perf_by_country.update_layout(xaxis_tickangle=-45, yaxis=dict(range=[0, 100]))
     st.plotly_chart(fig_perf_by_country)
 
+    # --- Store KPI/Individual KPI Chart ---
+    st.subheader("📈 Store and Individual KPI Analysis")
+    kpi_options = ["All", "Store KPI", "Individual KPI"]
+    kpi_selected = st.selectbox("Select KPI for Store Chart", kpi_options)
+
+    if kpi_selected == "All":
+        avg_kpi = kpi_df.groupby(col_store)[[col_store_kpi, col_ind_kpi]].mean().reset_index()
+        avg_kpi = avg_kpi.sort_values(by=col_store_kpi, ascending=False)
+        fig_kpi = px.bar(
+            avg_kpi.melt(id_vars=col_store, value_vars=[col_store_kpi, col_ind_kpi],
+                         var_name="KPI Type", value_name="Average"),
+            x=col_store, y="Average", color="KPI Type",
+            barmode="group",
+            title=f"Average Store KPI and Individual KPI by Store ({country_selected_kpi})"
+        )
+        fig_kpi.update_layout(xaxis_tickangle=-45)
+        st.plotly_chart(fig_kpi)
+    elif kpi_selected == "Store KPI":
+        avg_store_kpi = kpi_df.groupby(col_store)[col_store_kpi].mean().reset_index()
+        avg_store_kpi = avg_store_kpi.sort_values(by=col_store_kpi, ascending=False)
+        fig_storekpi = px.bar(
+            avg_store_kpi,
+            x=col_store, y=col_store_kpi,
+            title=f"Average Store KPI by Store ({country_selected_kpi})",
+            labels={col_store_kpi: "Average Store KPI"}
+        )
+        fig_storekpi.update_layout(xaxis_tickangle=-45)
+        st.plotly_chart(fig_storekpi)
+    elif kpi_selected == "Individual KPI":
+        avg_ind_kpi = kpi_df.groupby(col_store)[col_ind_kpi].mean().reset_index()
+        avg_ind_kpi = avg_ind_kpi.sort_values(by=col_ind_kpi, ascending=False)
+        fig_indkpi = px.bar(
+            avg_ind_kpi,
+            x=col_store, y=col_ind_kpi,
+            title=f"Average Individual KPI by Store ({country_selected_kpi})",
+            labels={col_ind_kpi: "Average Individual KPI"}
+        )
+        fig_indkpi.update_layout(xaxis_tickangle=-45)
+        st.plotly_chart(fig_indkpi)
+
+    # --- KPI Details Grid ---
+    st.subheader("📋 Employee KPI Details")
+
+    kpi_grid = kpi_df[[col_employee_name, col_store, col_store_kpi, col_ind_kpi]].copy()
+    kpi_grid = kpi_grid.rename(columns={
+        col_employee_name: "Employee Name",
+        col_store: "Store",
+        col_store_kpi: "Store KPI",
+        col_ind_kpi: "Individual KPI"
+    })
+
+    st.dataframe(
+        kpi_grid.sort_values(by="Store KPI", ascending=False),
+        use_container_width=True
+    )
 
     
     # --- Country-wise Bell Curve ---
@@ -285,61 +340,8 @@ if uploaded_file is not None:
         st.plotly_chart(fig_bell)
 
 
-    # --- Store KPI/Individual KPI Chart ---
-    st.subheader("📈 Store and Individual KPI Analysis")
-    kpi_options = ["All", "Store KPI", "Individual KPI"]
-    kpi_selected = st.selectbox("Select KPI for Store Chart", kpi_options)
 
-    if kpi_selected == "All":
-        avg_kpi = kpi_df.groupby(col_store)[[col_store_kpi, col_ind_kpi]].mean().reset_index()
-        avg_kpi = avg_kpi.sort_values(by=col_store_kpi, ascending=False)
-        fig_kpi = px.bar(
-            avg_kpi.melt(id_vars=col_store, value_vars=[col_store_kpi, col_ind_kpi],
-                         var_name="KPI Type", value_name="Average"),
-            x=col_store, y="Average", color="KPI Type",
-            barmode="group",
-            title=f"Average Store KPI and Individual KPI by Store ({country_selected_kpi})"
-        )
-        fig_kpi.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig_kpi)
-    elif kpi_selected == "Store KPI":
-        avg_store_kpi = kpi_df.groupby(col_store)[col_store_kpi].mean().reset_index()
-        avg_store_kpi = avg_store_kpi.sort_values(by=col_store_kpi, ascending=False)
-        fig_storekpi = px.bar(
-            avg_store_kpi,
-            x=col_store, y=col_store_kpi,
-            title=f"Average Store KPI by Store ({country_selected_kpi})",
-            labels={col_store_kpi: "Average Store KPI"}
-        )
-        fig_storekpi.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig_storekpi)
-    elif kpi_selected == "Individual KPI":
-        avg_ind_kpi = kpi_df.groupby(col_store)[col_ind_kpi].mean().reset_index()
-        avg_ind_kpi = avg_ind_kpi.sort_values(by=col_ind_kpi, ascending=False)
-        fig_indkpi = px.bar(
-            avg_ind_kpi,
-            x=col_store, y=col_ind_kpi,
-            title=f"Average Individual KPI by Store ({country_selected_kpi})",
-            labels={col_ind_kpi: "Average Individual KPI"}
-        )
-        fig_indkpi.update_layout(xaxis_tickangle=-45)
-        st.plotly_chart(fig_indkpi)
-
-    # --- KPI Details Grid ---
-    st.subheader("📋 Employee KPI Details")
-
-    kpi_grid = kpi_df[[col_employee_name, col_store, col_store_kpi, col_ind_kpi]].copy()
-    kpi_grid = kpi_grid.rename(columns={
-        col_employee_name: "Employee Name",
-        col_store: "Store",
-        col_store_kpi: "Store KPI",
-        col_ind_kpi: "Individual KPI"
-    })
-
-    st.dataframe(
-        kpi_grid.sort_values(by="Store KPI", ascending=False),
-        use_container_width=True
-    )
+    
     # 🎯 Employee KPI Performance Visual
     st.header("🎯 Employee Performance Based on Individual KPI")
 
