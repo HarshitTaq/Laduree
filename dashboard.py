@@ -205,6 +205,75 @@ if uploaded_file is not None:
         use_container_width=True
     )
 
+
+        
+    # 🎯 Employee KPI Performance Visual
+    st.header("🎯 Employee Performance Based on Individual KPI")
+    
+    st.markdown("""
+    **Performance Band Criteria**
+
+    - **Below Expectations** → Score ≤ 60  
+    - **Needs Improvement** → 60.1 – 75.5  
+    - **Meets Expectations** → 75.6 – 95  
+    - **Outstanding** → Score > 95  
+    """)
+
+    # --- Step 1: Derive Status Column ---
+    def get_status(score):
+        if score <= 60:
+            return "Below Expectations"
+        elif 60.1 <= score <= 75.5:
+            return "Needs Improvement"
+        elif 75.6 <= score <= 95:
+            return "Meets Expectations"
+        else:
+            return "Outstanding"
+
+    df["Status"] = df["Individual KPI"].apply(get_status)
+
+    # --- Step 2: Country Filter ---
+    countries = ["All"] + sorted(df["Country"].dropna().unique().tolist())
+    selected_country = st.selectbox("Select Country", countries)
+
+    if selected_country != "All":
+        filtered_df = df[df["Country"] == selected_country]
+    else:
+        filtered_df = df.copy()
+
+    # --- Step 3: Pie Chart ---
+    status_counts = filtered_df["Status"].value_counts().reset_index()
+    status_counts.columns = ["Status", "Count"]
+
+    color_map = {
+        "Outstanding": "#006400",          # Dark Green
+        "Meets Expectations": "#32CD32",   # Bright Green
+        "Needs Improvement": "#FFC0CB",    # Light Pink
+        "Below Expectations": "#FF0000"    # Red
+    }
+
+    fig = px.pie(
+        status_counts,
+        names="Status",
+        values="Count",
+        color="Status",
+        color_discrete_map=color_map,
+        title="Individual KPI Distribution"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Add serial number starting from 1
+    filtered_df = filtered_df.copy()
+    filtered_df["S.No"] = range(1, len(filtered_df) + 1)
+
+    # Reorder columns so S.No comes first
+    filtered_df = filtered_df[["S.No", "Employee Name", "Store", "Country", "State", "Individual KPI", "Status"]]
+
+    # Display grid without the default index
+    st.dataframe(filtered_df, use_container_width=True, hide_index=True)
+
+
+    
     
     # --- Country-wise Bell Curve ---
     st.subheader("Country-wise Bell Curve")
@@ -340,72 +409,6 @@ if uploaded_file is not None:
         st.plotly_chart(fig_bell)
         
 
-
-        
-    # 🎯 Employee KPI Performance Visual
-    st.header("🎯 Employee Performance Based on Individual KPI")
-    
-    st.markdown("""
-    **Performance Band Criteria**
-
-    - **Below Expectations** → Score ≤ 60  
-    - **Needs Improvement** → 60.1 – 75.5  
-    - **Meets Expectations** → 75.6 – 95  
-    - **Outstanding** → Score > 95  
-    """)
-
-    # --- Step 1: Derive Status Column ---
-    def get_status(score):
-        if score <= 60:
-            return "Below Expectations"
-        elif 60.1 <= score <= 75.5:
-            return "Needs Improvement"
-        elif 75.6 <= score <= 95:
-            return "Meets Expectations"
-        else:
-            return "Outstanding"
-
-    df["Status"] = df["Individual KPI"].apply(get_status)
-
-    # --- Step 2: Country Filter ---
-    countries = ["All"] + sorted(df["Country"].dropna().unique().tolist())
-    selected_country = st.selectbox("Select Country", countries)
-
-    if selected_country != "All":
-        filtered_df = df[df["Country"] == selected_country]
-    else:
-        filtered_df = df.copy()
-
-    # --- Step 3: Pie Chart ---
-    status_counts = filtered_df["Status"].value_counts().reset_index()
-    status_counts.columns = ["Status", "Count"]
-
-    color_map = {
-        "Outstanding": "#006400",          # Dark Green
-        "Meets Expectations": "#32CD32",   # Bright Green
-        "Needs Improvement": "#FFC0CB",    # Light Pink
-        "Below Expectations": "#FF0000"    # Red
-    }
-
-    fig = px.pie(
-        status_counts,
-        names="Status",
-        values="Count",
-        color="Status",
-        color_discrete_map=color_map,
-        title="Individual KPI Distribution"
-    )
-    st.plotly_chart(fig, use_container_width=True)
-
-    # Add serial number starting from 1
-    filtered_df = filtered_df.copy()
-    filtered_df["S.No"] = range(1, len(filtered_df) + 1)
-
-    # Reorder columns so S.No comes first
-    filtered_df = filtered_df[["S.No", "Employee Name", "Store", "Country", "State", "Individual KPI", "Status"]]
-
-    # Display grid without the default index
-    st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
 
 else:
