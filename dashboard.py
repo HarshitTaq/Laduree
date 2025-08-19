@@ -404,8 +404,8 @@ if uploaded_file is not None:
     # Reorder columns so S.No comes first
     filtered_df = filtered_df[["S.No", "Employee Name", "Store", "Country", "State", "Individual KPI", "Status"]]
 
-    # Display grid
-    st.dataframe(filtered_df)
+    # Display grid without the default index
+    st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
 
 else:
